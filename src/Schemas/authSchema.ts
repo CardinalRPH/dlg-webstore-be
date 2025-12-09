@@ -13,10 +13,10 @@ export const usetRegisterSchema = z.object({
     phone: z.string().min(10).startsWith("62")
 })
 
-export const userForgetPass = z.object({
+export const userForgetPassSchema = z.object({
     email: z.email()
 })
 
-export const userResetPass = z.object({
+export const userResetPassSchema = z.object({
     otp: z.number().max(4).min(4)
 })

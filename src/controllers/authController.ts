@@ -5,7 +5,7 @@ import { userLoginSchema } from "../Schemas/authSchema";
 import { StatusCodes } from "http-status-codes";
 import { comparePass } from "../utils/bcryptGenerate";
 
-const userLogin = async (req: Request, res: Response) => {
+export const userLogin = async (req: Request, res: Response) => {
     try {
         const { email, password }: z.infer<typeof userLoginSchema> = req.body
         const user = await getUniqueUser({
@@ -25,7 +25,8 @@ const userLogin = async (req: Request, res: Response) => {
 
         req.session.user = {
             id: user.id,
-            email: user.email
+            email: user.email,
+            isVerif:user.isVerif
         }
 
         return res.status(200).json({
@@ -37,5 +38,13 @@ const userLogin = async (req: Request, res: Response) => {
             message: error
         })
 
+    }
+}
+
+export const userRegister = async (req: Request, res: Response) => {
+    try {
+        
+    } catch (error) {
+        
     }
 }

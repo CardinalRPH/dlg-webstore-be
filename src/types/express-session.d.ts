@@ -5,6 +5,7 @@ declare module "express-session" {
     user?: {
       id: number;
       email: string;
+      isVerif:boolean
     };
   }
 }
