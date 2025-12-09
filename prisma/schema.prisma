@@ -1,0 +1,191 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  birthDate DateTime
+  phone     String   @unique
+  joinDate  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+  cart   Cart?
+}
+
+model OTP {
+  id        Int      @id @default(autoincrement())
+  email     String
+  code      String
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ProductCategory {
+  COFFEE
+  ACCESSORY
+}
+
+model Product {
+  id          Int     @id @default(autoincrement())
+  name        String
+  price       Int
+  imageUrl    String?
+  description String?
+
+  rating      Float @default(0)
+  reviewCount Int   @default(0)
+
+  category ProductCategory @default(COFFEE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  coffeeDetail    CoffeeDetail?
+  accessoryDetail AccessoryDetail?
+  orderItems      OrderItem[]
+  cartItems       CartItem[]
+}
+
+model CoffeeDetail {
+  id        Int     @id @default(autoincrement())
+  productId Int     @unique
+  product   Product @relation(fields: [productId], references: [id])
+
+  notes           Json // string[] disimpan sebagai JSON
+  origin          String
+  weight          String
+  roastLevel      RoastLevel
+  availableGrinds Json
+}
+
+enum RoastLevel {
+  Light
+  Medium
+  Dark
+}
+
+model AccessoryDetail {
+  id        Int     @id @default(autoincrement())
+  productId Int     @unique
+  product   Product @relation(fields: [productId], references: [id])
+
+  material String
+  features Json
+  specs    Json // karena dynamic key-value
+}
+
+model Cart {
+  id     Int        @id @default(autoincrement())
+  userId Int        @unique
+  user   User       @relation(fields: [userId], references: [id])
+  items  CartItem[]
+}
+
+model CartItem {
+  id        Int     @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  name      String
+  price     Int
+  imageUrl  String?
+  quantity  Int     @default(1)
+  variant   String? // example: “Medium Grind” or “Black Color”
+
+  cart    Cart    @relation(fields: [cartId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id     String @id @default(cuid())
+  userId Int
+  user   User   @relation(fields: [userId], references: [id])
+
+  date   DateTime    @default(now())
+  status OrderStatus @default(PENDING)
+
+  subtotal     Int
+  shippingCost Int
+  totalAmount  Int
+
+  shippingAddress Json // { receiver, phone, address }
+
+  paymentMethod String
+
+  items OrderItem[]
+
+  invoice Invoice?
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESS
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+model OrderItem {
+  id        Int    @id @default(autoincrement())
+  orderId   String
+  productId Int
+
+  name     String
+  price    Int // unit price
+  quantity Int
+  variant  String? // optional variant
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Invoice {
+  id      String @id @default(cuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  invoiceDate     DateTime @default(now())
+  dueDate         DateTime
+  customerName    String
+  customerEmail   String
+  billingAddress  String
+  shippingAddress String
+
+  subtotal      Int
+  shippingCost  Int
+  taxRate       Float
+  taxAmount     Int
+  totalAmount   Int
+  paymentMethod String
+
+  items InvoiceItem[]
+}
+
+model InvoiceItem {
+  id        Int     @id @default(autoincrement())
+  invoiceId String
+  name      String
+  quantity  Int
+  price     Int // unit price
+  variant   String?
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
