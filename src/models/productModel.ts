@@ -35,7 +35,10 @@ export const updateProduct = async (id: number, data: ProductUpdateInput) => {
                 id
             }
         })
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === "P2025") {
+            return null;
+        }
         throw error
     }
 }

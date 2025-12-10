@@ -1,8 +1,11 @@
 import bcrypt from 'bcrypt'
 import processEnv from '../../env'
 
+
+export const SALT_ROUND = processEnv.SALT_ROUND
+
 export const hashPass = async (pass:string): Promise<string> => {
-    const saltRound = processEnv.SALT_ROUND
+    const saltRound = SALT_ROUND
 
     const hashedPass:string = await new Promise ((resolve, reject)=> {
         bcrypt.hash(pass, saltRound, (err, hashed)=> {

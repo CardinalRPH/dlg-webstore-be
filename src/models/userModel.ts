@@ -50,7 +50,10 @@ export const updateUser = async (data: UserUpdateInput, id: number) => {
                 id
             }
         })
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === "P2025") {
+            return null;
+        }
         throw error
     }
 }

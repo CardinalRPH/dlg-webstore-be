@@ -45,7 +45,10 @@ export const updateOrder = async (data: OrderUpdateInput, id: string) => {
                 id
             }
         })
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === "P2025") {
+            return null;
+        }
         throw error
     }
 }

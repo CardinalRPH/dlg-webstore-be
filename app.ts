@@ -8,6 +8,7 @@ dotenv.config();
 import indexRouter from "./src/routes";
 import session from "express-session";
 import processEnv from "./env";
+import authRouter from "./src/routes/authRouter";
 
 const app = express();
 
@@ -18,15 +19,17 @@ app.use(cookieParser());
 app.use(static_(join(__dirname, "public")));
 app.set('trust proxy', 1)
 app.use(session({
-    secret:processEnv.SESSION_SECRET,
+    secret: processEnv.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie:{
-        secure:false,
-         maxAge: 1000 * 60 * 60
+    cookie: {
+        secure: false,
+        maxAge: 1000 * 60 * 60
     }
 }))
 
+// router section
 app.use("/", indexRouter);
+app.use('/auth', authRouter)
 
 export default app;

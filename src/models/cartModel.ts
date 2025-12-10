@@ -35,7 +35,10 @@ export const updateCart = async (data: CartUpdateInput, id: number) => {
                 id
             }
         })
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === "P2025") {
+            return null;
+        }
         throw error
     }
 }

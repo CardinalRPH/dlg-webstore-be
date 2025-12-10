@@ -5,11 +5,11 @@ export const userLoginSchema = z.object({
     password: z.string().min(8)
 })
 
-export const usetRegisterSchema = z.object({
+export const userRegisterSchema = z.object({
     name: z.string(),
     email: z.email(),
     password: z.string().min(8),
-    birthDate: z.date(),
+    birthDate: z.coerce.date(),
     phone: z.string().min(10).startsWith("62")
 })
 
@@ -18,5 +18,7 @@ export const userForgetPassSchema = z.object({
 })
 
 export const userResetPassSchema = z.object({
-    otp: z.number().max(4).min(4)
+    newPass: z.string().min(8),
+    resetId: z.number(),
+    email: z.email()
 })

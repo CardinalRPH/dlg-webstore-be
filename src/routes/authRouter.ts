@@ -1,11 +1,17 @@
 import { Router } from 'express';
-import validateData from '../middlewares/dataValidationBody';
-import { userLoginSchema } from '../Schemas/authSchema';
-import { userLogin } from '../controllers/authController';
+import validateDataBody from '../middlewares/dataValidationBody';
+import { userForgetPassSchema, userLoginSchema, userRegisterSchema, userResetPassSchema } from '../Schemas/authSchema';
+import { userForgetPass, userLogin, userRegister, userResetPass, userVerify } from '../controllers/authController';
+import { defaultPublicRateLimiter, loginRateLimiter, registerRateLimiter, resetRateLimiter } from '../middlewares/rateLimiter';
 
-const router = Router();
+const authRouter = Router();
 
 
-router.post('/login', validateData(userLoginSchema), userLogin)
+authRouter.post('/login', loginRateLimiter, validateDataBody(userLoginSchema), userLogin)
+authRouter.post('/register', registerRateLimiter, validateDataBody(userRegisterSchema), userRegister)
+authRouter.post('/forget-pass', resetRateLimiter, validateDataBody(userForgetPassSchema), userForgetPass)
+authRouter.get('/verify-pass/:resetToken', defaultPublicRateLimiter, userVerify)
+authRouter.put("/reset-pass", resetRateLimiter, validateDataBody(userResetPassSchema), userResetPass)
 
-export default router;
+
+export default authRouter;

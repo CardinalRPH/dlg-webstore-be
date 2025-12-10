@@ -2,10 +2,10 @@ import { NextFunction, Request, Response } from "express"
 import { StatusCodes } from "http-status-codes";
 import z, { ZodError } from "zod";
 
-const validateDataBody = (schema: z.ZodObject<any, any>) => {
+const validateDataQuery = (schema: z.ZodObject<any, any>) => {
     return (req: Request, res: Response, next: NextFunction) => {
         try {
-            schema.parse(req.body);
+            schema.parse(req.query);
             next();
         } catch (error) {
             if (error instanceof ZodError) {
@@ -20,4 +20,4 @@ const validateDataBody = (schema: z.ZodObject<any, any>) => {
     }
 }
 
-export default validateDataBody
+export default validateDataQuery
