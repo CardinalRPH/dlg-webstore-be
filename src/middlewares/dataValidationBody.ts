@@ -1,11 +1,21 @@
 import { NextFunction, Request, Response } from "express"
 import { StatusCodes } from "http-status-codes";
 import z, { ZodError } from "zod";
+import { middleWareSchema } from "../types/middlewareValidationType";
 
-const validateDataBody = (schema: z.ZodObject<any, any>) => {
+const validateData = ({ bodySchema, paramsSchema, querySchema }: middleWareSchema) => {
     return (req: Request, res: Response, next: NextFunction) => {
         try {
-            schema.parse(req.body);
+            if (bodySchema) {
+                bodySchema.parse(req.body)
+            }
+            if (paramsSchema) {
+                paramsSchema.parse(req.params)
+            }
+            if (querySchema) {
+                querySchema.parse(req.query)
+            }
+
             next();
         } catch (error) {
             if (error instanceof ZodError) {
@@ -20,4 +30,4 @@ const validateDataBody = (schema: z.ZodObject<any, any>) => {
     }
 }
 
-export default validateDataBody
+export default validateData

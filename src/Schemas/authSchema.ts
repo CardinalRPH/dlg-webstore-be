@@ -22,3 +22,7 @@ export const userResetPassSchema = z.object({
     resetId: z.number(),
     email: z.email()
 })
+
+export const userVerifySchema = z.object({
+    resetToken: z.string()
+})

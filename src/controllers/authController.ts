@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { addUser, getUniqueUser, updateUser } from "../models/userModel";
-import z from "zod";
-import { userForgetPassSchema, userLoginSchema, userResetPassSchema, userRegisterSchema } from "../Schemas/authSchema";
+import { userForgetPassSchema, userLoginSchema, userResetPassSchema, userRegisterSchema, userVerifySchema } from "../Schemas/authSchema";
 import { StatusCodes } from "http-status-codes";
 import { comparePass, hashPass } from "../services/bcryptGenerate";
 import genOtpCode from "../utils/generateOtpCode";
@@ -11,19 +10,22 @@ import { BASE_FE_LINK, RESET_EXPIRE } from "../configs/variables";
 import { sendEmail } from "../services/emailService";
 import { decryptData, encryptData } from "../services/aesEncryptor";
 import { generateJWT, verifyJWT } from "../services/jwtGenerate";
+import getRequestData from "../utils/getRequestData";
 
 export const userLogin = async (req: Request, res: Response) => {
     try {
-        const { email, password }: z.infer<typeof userLoginSchema> = req.body
+        const { bodyData } = getRequestData({
+            bodySchema: userLoginSchema
+        }, req)
         const user = await getUniqueUser({
-            email
+            email: bodyData.email
         })
         if (!user) {
             return res.status(StatusCodes.NOT_FOUND).json({
                 message: "User not found"
             })
         }
-        const comparedPass = await comparePass(password, user.password)
+        const comparedPass = await comparePass(bodyData.password, user.password)
         if (!comparedPass) {
             return res.status(StatusCodes.UNAUTHORIZED).json({
                 message: "Wrong Password"
@@ -51,7 +53,7 @@ export const userLogin = async (req: Request, res: Response) => {
 
 export const userRegister = async (req: Request, res: Response) => {
     try {
-        const data: z.infer<typeof userRegisterSchema> = req.body
+        const { bodyData: data } = getRequestData({ bodySchema: userRegisterSchema }, req)
         const user = await getUniqueUser({
             email: data.email
         })
@@ -82,10 +84,10 @@ export const userRegister = async (req: Request, res: Response) => {
 
 export const userForgetPass = async (req: Request, res: Response) => {
     try {
-        const { email }: z.infer<typeof userForgetPassSchema> = req.body
+        const { bodyData } = getRequestData({ bodySchema: userForgetPassSchema }, req)
 
         const user = await getUniqueUser({
-            email
+            email: bodyData.email
         })
         if (!user) {
             return res.status(StatusCodes.NOT_FOUND).json({
@@ -106,12 +108,12 @@ export const userForgetPass = async (req: Request, res: Response) => {
 
         await addOtp({
             code: otpCode,
-            email,
+            email: user.email,
             expiresAt: new Date(Date.now() + RESET_EXPIRE),
             createdAt: new Date(Date.now())
         })
 
-        await sendEmail(email, "Verification Account", emailTemplate);
+        await sendEmail(user.email, "Verification Account", emailTemplate);
 
         return res.status(StatusCodes.OK).json({
             "message": "Reset Link has been sent successfully"
@@ -129,9 +131,9 @@ export const userForgetPass = async (req: Request, res: Response) => {
 
 export const userVerify = async (req: Request, res: Response) => {
     try {
-        const resetToken = req.params.resetToken
+        const { paramsData } = getRequestData({ paramsSchema: userVerifySchema }, req)
 
-        const { code, email } = verifyJWT<{ email: string, code: string }>(resetToken)
+        const { code, email } = verifyJWT<{ email: string, code: string }>(paramsData.resetToken)
 
 
         const decryptCode = decryptData(code)
@@ -176,7 +178,10 @@ export const userVerify = async (req: Request, res: Response) => {
 
 export const userResetPass = async (req: Request, res: Response) => {
     try {
-        const { newPass, resetId, email }: z.infer<typeof userResetPassSchema> = req.body
+        const { bodyData } = getRequestData({
+            bodySchema: userResetPassSchema
+        }, req)
+        const { resetId, email, newPass } = bodyData
         const avaiReset = await getFirstOtp({
             id: resetId
         })

@@ -9,6 +9,7 @@ import indexRouter from "./src/routes";
 import session from "express-session";
 import processEnv from "./env";
 import authRouter from "./src/routes/authRouter";
+import productRouter from "./src/routes/productRouter";
 
 const app = express();
 
@@ -31,5 +32,6 @@ app.use(session({
 // router section
 app.use("/", indexRouter);
 app.use('/auth', authRouter)
+app.use('/product', productRouter)
 
 export default app;

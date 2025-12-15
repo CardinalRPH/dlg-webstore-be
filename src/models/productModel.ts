@@ -4,7 +4,11 @@ import { prisma } from "../libs/prisma";
 export const getUniqueProduct = async (where: ProductWhereUniqueInput) => {
     try {
         const product = await prisma.product.findUnique({
-            where
+            where,
+            include:{
+                accessoryDetail:true,
+                coffeeDetail:true
+            }
         })
         if (!product) {
             return null
