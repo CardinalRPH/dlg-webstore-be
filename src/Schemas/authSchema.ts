@@ -19,7 +19,7 @@ export const userForgetPassSchema = z.object({
 
 export const userResetPassSchema = z.object({
     newPass: z.string().min(8),
-    resetId: z.number(),
+    resetId: z.string(),
     email: z.email()
 })
 

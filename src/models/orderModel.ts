@@ -15,13 +15,27 @@ export const getUniqueOrder = async (where: OrderWhereUniqueInput) => {
     }
 }
 
-export const getAllOrders = async (limit = 50, where?: OrderWhereInput, delta?: number) => {
+export const getAllOrders = async (limit = 50, where?: OrderWhereInput, cursor?: string) => {
     try {
-        return await prisma.order.findMany({
+        const orders = await prisma.order.findMany({
             take: limit,
-            skip: delta,
-            where
+            cursor: cursor ? { id: cursor } : undefined,
+            where,
+            orderBy: {
+                date: "desc"
+            }
         })
+        const hasNextPage = orders.length > limit;
+        const data = hasNextPage ? orders.slice(0, limit) : orders;
+
+        return {
+            data,
+            pagination: {
+                limit,
+                nextCursor: hasNextPage ? data[data.length - 1].id : undefined,
+                hasNextPage,
+            },
+        };
     } catch (error) {
         throw error
     }

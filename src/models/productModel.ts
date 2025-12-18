@@ -5,9 +5,9 @@ export const getUniqueProduct = async (where: ProductWhereUniqueInput) => {
     try {
         const product = await prisma.product.findUnique({
             where,
-            include:{
-                accessoryDetail:true,
-                coffeeDetail:true
+            include: {
+                accessoryDetail: true,
+                coffeeDetail: true
             }
         })
         if (!product) {
@@ -19,19 +19,35 @@ export const getUniqueProduct = async (where: ProductWhereUniqueInput) => {
     }
 }
 
-export const getAllProducts = async (limit = 50, delta?: number, where?: ProductWhereInput) => {
+export const getAllProducts = async (limit = 50, cursor?: string, where?: ProductWhereInput) => {
     try {
-        return await prisma.product.findMany({
+        const products = await prisma.product.findMany({
             take: limit,
-            skip: delta,
-            where
+            cursor: cursor ? { id: cursor } : undefined,
+            where,
+            orderBy: {
+                createdAt: "asc"
+            }
+
         })
+
+        const hasNextPage = products.length > limit;
+        const data = hasNextPage ? products.slice(0, limit) : products;
+
+        return {
+            data,
+            pagination: {
+                limit,
+                nextCursor: hasNextPage ? data[data.length - 1].id : undefined,
+                hasNextPage,
+            },
+        };
     } catch (error) {
         throw error
     }
 }
 
-export const updateProduct = async (id: number, data: ProductUpdateInput) => {
+export const updateProduct = async (id: string, data: ProductUpdateInput) => {
     try {
         return await prisma.product.update({
             data,
@@ -47,7 +63,7 @@ export const updateProduct = async (id: number, data: ProductUpdateInput) => {
     }
 }
 
-export const deleteProduct = async (id: number) => {
+export const deleteProduct = async (id: string) => {
     try {
         await prisma.product.delete({
             where: {

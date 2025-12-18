@@ -7,7 +7,7 @@ import { StatusCodes } from "http-status-codes"
 export const productGetAll = async (req: Request, res: Response) => {
     try {
         const { queryData } = getRequestData({ querySchema: prodcutGetAllSchema }, req)
-        const products = await getAllProducts(queryData.take, queryData.skip, {
+        const products = await getAllProducts(queryData.take, queryData.cursor, {
             category: queryData.cat
         })
 

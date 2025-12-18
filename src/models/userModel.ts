@@ -1,11 +1,12 @@
 
-import { UserCreateInput, UserUpdateInput, UserWhereInput, UserWhereUniqueInput } from "../../generated/prisma/models";
+import { UserCreateInput, UserOmit, UserUpdateInput, UserWhereInput, UserWhereUniqueInput } from "../../generated/prisma/models";
 import { prisma } from "../libs/prisma";
 
-export const getUniqueUser = async (where: UserWhereUniqueInput) => {
+export const getUniqueUser = async (where: UserWhereUniqueInput, omit?:UserOmit) => {
     try {
         const user = await prisma.user.findUnique({
-            where
+            where,
+            omit
         })
         if (!user) {
             return null
@@ -42,7 +43,7 @@ export const addUser = async (data: UserCreateInput) => {
     }
 }
 
-export const updateUser = async (data: UserUpdateInput, id: number) => {
+export const updateUser = async (data: UserUpdateInput, id: string) => {
     try {
         return await prisma.user.update({
             data,

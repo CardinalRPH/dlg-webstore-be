@@ -25,7 +25,7 @@ export const addOtp = async (data: OTPCreateInput) => {
     }
 }
 
-export const deleteOtp = async (id: number) => {
+export const deleteOtp = async (id: string) => {
     try {
         await prisma.oTP.delete({
             where: {
@@ -37,7 +37,7 @@ export const deleteOtp = async (id: number) => {
     }
 }
 
-export const updateOtp = async (isUsed: boolean, id: number) => {
+export const updateOtp = async (isUsed: boolean, id: string) => {
     try {
         await prisma.oTP.update({
             data: {

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 
-export const isAuthenticated = (
+export const isNoAuthenticated = (
     req: Request,
     res: Response,
     next: NextFunction

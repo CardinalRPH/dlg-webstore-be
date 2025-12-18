@@ -1,10 +1,15 @@
-import { CartCreateInput, CartUpdateInput, CartWhereInput, CartWhereUniqueInput } from "../../generated/prisma/models"
+import z from "zod"
+import { CartItemCreateInput, CartItemUpdateInput, CartUpdateInput, CartWhereInput, CartWhereUniqueInput } from "../../generated/prisma/models"
 import { prisma } from "../libs/prisma"
+import { cartAddItemSchema } from "../Schemas/cartSchema"
 
 export const getUniqueCart = async (where: CartWhereUniqueInput) => {
     try {
         const cart = await prisma.cart.findUnique({
-            where
+            where,
+            include: {
+                items: true
+            }
         })
         if (!cart) {
             return null
@@ -15,22 +20,50 @@ export const getUniqueCart = async (where: CartWhereUniqueInput) => {
     }
 }
 
-export const getAllCarts = async (limit = 50, delta?: number, where?: CartWhereInput) => {
+export const getAllCarts = async (limit = 50, userId: string, cursor?: string) => {
     try {
-        return await prisma.cart.findMany({
-            take: limit,
-            skip: delta,
-            where
+        const carts = await prisma.cart.findUnique({
+            where: {
+                userId
+            },
+            include: {
+                items: {
+                    take: limit,
+                    cursor: cursor ? { id: cursor } : undefined
+                }
+            }
         })
+
+        if (!carts) {
+            return null
+        }
+
+        const hasNextPage = carts.items.length > limit;
+        const data = hasNextPage ? carts.items.slice(0, limit) : carts.items;
+
+        return {
+            data,
+            pagination: {
+                limit,
+                nextCursor: hasNextPage ? data[data.length - 1].id : undefined,
+                hasNextPage,
+            },
+        };
     } catch (error) {
         throw error
     }
 }
 
-export const updateCart = async (data: CartUpdateInput, id: number) => {
+export const updateCart = async (id: string, increment?: boolean, decrement?: boolean) => {
     try {
-        return await prisma.cart.update({
-            data,
+        return await prisma.cartItem.update({
+            data: {
+                quantity: increment ? {
+                    increment: 1
+                } : decrement ? {
+                    decrement: 1
+                } : undefined
+            },
             where: {
                 id
             }
@@ -43,21 +76,59 @@ export const updateCart = async (data: CartUpdateInput, id: number) => {
     }
 }
 
-export const addCart = async (data: CartCreateInput) => {
+export const addCart = async (data: z.infer<typeof cartAddItemSchema>) => {
     try {
-        return await prisma.cart.create({
-            data
+        const { userId, productId, name, price, imageUrl, variant } = data
+        const cart = await prisma.cart.upsert({
+            where: { userId },
+            update: {},
+            create: {
+                userId
+            }
         })
+
+        const existingItem = await prisma.cartItem.findFirst({
+            where: {
+                cartId: cart.id,
+                productId,
+                variant: variant ?? null
+            }
+        })
+
+        if (existingItem) {
+            return await prisma.cartItem.update({
+                where: {
+                    id: existingItem.id
+                },
+                data: {
+                    quantity: {
+                        increment: 1
+                    }
+                }
+            })
+        }
+
+        return prisma.cartItem.create({
+            data: {
+                cartId: cart.id,
+                productId,
+                name,
+                price,
+                imageUrl,
+                quantity: 1,
+                variant,
+            },
+        });
     } catch (error) {
         throw error
     }
 }
 
-export const deleteCart = async (id: number) => {
+export const deleteCart = async (cartitemId: string) => {
     try {
-        await prisma.cart.delete({
+        await prisma.cartItem.delete({
             where: {
-                id
+                id: cartitemId
             }
         })
     } catch (error) {

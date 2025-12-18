@@ -10,6 +10,8 @@ import session from "express-session";
 import processEnv from "./env";
 import authRouter from "./src/routes/authRouter";
 import productRouter from "./src/routes/productRouter";
+import userRouter from "./src/routes/userRouter";
+import cartRouter from "./src/routes/cartRouter";
 
 const app = express();
 
@@ -33,5 +35,7 @@ app.use(session({
 app.use("/", indexRouter);
 app.use('/auth', authRouter)
 app.use('/product', productRouter)
+app.use('/user', userRouter)
+app.use('/cart', cartRouter)
 
 export default app;
