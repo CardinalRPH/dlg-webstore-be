@@ -16,6 +16,10 @@ export const REGISTER_MAX = 3
 export const PUBLIC_RATE = 15 * 60 * 1000
 export const PUBLIC_MAX = 100
 
+export const PAYMENT_APPROVAL_EXPIRE = 24 * 60 * 60 * 1000
+
+export const SHIPPING_ESTIMATE_HOURS = 24 * 60 * 60 * 1000
+
 
 
 export const BASE_FE_LINK = "http://localhost:5172"

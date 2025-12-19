@@ -4,7 +4,11 @@ import { prisma } from "../libs/prisma";
 export const getUniqueOrder = async (where: OrderWhereUniqueInput) => {
     try {
         const order = await prisma.order.findUnique({
-            where
+            where,
+            include: {
+                payment: true,
+                shipping: true
+            }
         })
         if (!order) {
             return null

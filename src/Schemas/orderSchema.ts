@@ -1,4 +1,5 @@
 import z from "zod"
+import { OrderStatus } from "../../generated/prisma/enums"
 
 export const ordersGetAllSchemaQuery = z.object({
     take: z.coerce.number(),
@@ -10,7 +11,6 @@ export const ordersGetDetailSchemaParams = z.object({
 })
 
 export const orderCreateSchemaBody = z.object({
-    paymentServiceId: z.string(),
     shippingServiceId: z.string(),
     shipping: z.object({
         receiverName: z.string(),
@@ -20,4 +20,12 @@ export const orderCreateSchemaBody = z.object({
         postalCode: z.string(),
         country: z.string()
     })
+})
+
+export const orderUpdateStatusSchemaParams = z.object({
+    orderId: z.string(),
+})
+
+export const orderUpdateStatusSchemaBody = z.object({
+    status: z.enum(OrderStatus)
 })

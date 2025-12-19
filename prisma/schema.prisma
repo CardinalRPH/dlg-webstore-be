@@ -20,15 +20,17 @@ model User {
   isVerif   Boolean  @default(false)
   password  String
   birthDate DateTime
-  
-  balance   Int      @default(1000000)
+
+  balance Int @default(1000000)
 
   phone     String   @unique
   joinDate  DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders Order[]
-  cart   Cart?
+  orders         Order[]
+  payments       Payment[]
+  balanceHistory BalanceHistory[]
+  cart           Cart?
 }
 
 model OTP {
@@ -123,19 +125,20 @@ model Order {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
-  date   DateTime    @default(now())
-  status OrderStatus @default(PYMT_PDG)
+  date       DateTime    @default(now())
+  status     OrderStatus @default(PYMT_PDG)
   nextStatus OrderStatus @default(PYMT_SCS)
+
+  approvalExpiredAt DateTime // ⏰ deadline 1 hari
+  approvedAt        DateTime?
+  cancelledAt       DateTime?
 
   subtotal     Int
   shippingCost Int
   totalAmount  Int
 
-  items   OrderItem[]
-  invoice Invoice?
-
-  // TRANSACTION TABLES
-  payment  PaymentProduct?
+  items    OrderItem[]
+  invoice  Invoice?
   shipping Shipping?
 }
 
@@ -165,11 +168,11 @@ model Invoice {
   billingAddress  String
   shippingAddress String
 
-  subtotal      Int
-  shippingCost  Int
-  taxRate       Float
-  taxAmount     Int
-  totalAmount   Int
+  subtotal     Int
+  shippingCost Int
+  taxRate      Float
+  taxAmount    Int
+  totalAmount  Int
 
   items InvoiceItem[]
 }
@@ -193,18 +196,16 @@ enum PaymentStatus {
 }
 
 enum OrderStatus {
-  PYMT_PDG  // ORDER_STATUS = PENDING
-  PYMT_EXP  // ORDER_STATUS = CANCELLED
-  PYMT_CNC  // ORDER_STATUS = CANCELLED
-  PYMT_SCS  // ORDER_STATUS = PROCESS
+  PYMT_PDG // ORDER_STATUS = PENDING
+  PYMT_CNC // ORDER_STATUS = CANCELLED
+  PYMT_SCS // ORDER_STATUS = PROCESS
 
-  SHIP_PDG  // ORDER_STATUS = WAITING_SHIPMENT
-  SHIP_SHP  // ORDER_STATUS = SHIPPED
-  SHIP_DLV  // ORDER_STATUS = COMPLETED
+  SHIP_PDG // ORDER_STATUS = WAITING_SHIPMENT
+  SHIP_SHP // ORDER_STATUS = SHIPPED
+  SHIP_DLV // ORDER_STATUS = COMPLETED
 
-  ORDR_CNC  // ORDER_STATUS = CANCELLED
+  ORDR_CNC // ORDER_STATUS = CANCELLED
 }
-
 
 enum ShippingStatus {
   PENDING
@@ -251,28 +252,21 @@ model ShippingService {
   shippings Shipping[]
 }
 
-model PaymentProduct {
-  id          String  @id @default(cuid())
-  OrderId     String  @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  orders Order[]
-}
-
 model Payment {
-  id      String @id @default(cuid())
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
   paymentServiceId String
   paymentService   PaymentService @relation(fields: [paymentServiceId], references: [id])
 
-  amount     Int
-  status     PaymentStatus @default(PENDING)
-  paidBefore DateTime
+  amount Int
+  status PaymentStatus @default(PENDING)
 
-  // Gateway info
+  paidBefore DateTime
+  paidAt     DateTime?
+
   transactionId String?
-  paidAt        DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -301,4 +295,37 @@ model Shipping {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model BalanceHistory {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  type   BalanceHistoryType
+  amount Int
+
+  balanceBefore Int
+  balanceAfter  Int
+
+  referenceType BalanceReferenceType
+  referenceId   String?
+
+  description String?
+
+  createdAt DateTime @default(now())
+}
+
+enum BalanceHistoryType {
+  TOPUP
+  PURCHASE
+  REFUND
+  ADJUSTMENT
+}
+
+enum BalanceReferenceType {
+  PAYMENT
+  ORDER
+  SYSTEM
 }
