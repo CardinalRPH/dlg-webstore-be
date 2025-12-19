@@ -20,6 +20,9 @@ model User {
   isVerif   Boolean  @default(false)
   password  String
   birthDate DateTime
+  
+  balance   Int      @default(1000000)
+
   phone     String   @unique
   joinDate  DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -121,7 +124,8 @@ model Order {
   user   User   @relation(fields: [userId], references: [id])
 
   date   DateTime    @default(now())
-  status OrderStatus @default(PENDING)
+  status OrderStatus @default(PYMT_PDG)
+  nextStatus OrderStatus @default(PYMT_SCS)
 
   subtotal     Int
   shippingCost Int
@@ -131,16 +135,8 @@ model Order {
   invoice Invoice?
 
   // TRANSACTION TABLES
-  payment  Payment?
+  payment  PaymentProduct?
   shipping Shipping?
-}
-
-enum OrderStatus {
-  PENDING
-  PROCESS
-  SHIPPED
-  COMPLETED
-  CANCELLED
 }
 
 model OrderItem {
@@ -174,7 +170,6 @@ model Invoice {
   taxRate       Float
   taxAmount     Int
   totalAmount   Int
-  paymentMethod String
 
   items InvoiceItem[]
 }
@@ -195,7 +190,26 @@ enum PaymentStatus {
   PAID
   FAILED
   EXPIRED
-  REFUNDED
+}
+
+enum OrderStatus {
+  PYMT_PDG  // ORDER_STATUS = PENDING
+  PYMT_EXP  // ORDER_STATUS = CANCELLED
+  PYMT_CNC  // ORDER_STATUS = CANCELLED
+  PYMT_SCS  // ORDER_STATUS = PROCESS
+
+  SHIP_PDG  // ORDER_STATUS = WAITING_SHIPMENT
+  SHIP_SHP  // ORDER_STATUS = SHIPPED
+  SHIP_DLV  // ORDER_STATUS = COMPLETED
+
+  ORDR_CNC  // ORDER_STATUS = CANCELLED
+}
+
+
+enum ShippingStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
 }
 
 enum PaymentMethod {
@@ -203,14 +217,6 @@ enum PaymentMethod {
   CREDIT_CARD
   E_WALLET
   COD
-}
-
-enum ShippingStatus {
-  PENDING
-  READY
-  SHIPPED
-  DELIVERED
-  RETURNED
 }
 
 model PaymentService {
@@ -229,11 +235,12 @@ model PaymentService {
 }
 
 model ShippingService {
-  id          String  @id @default(cuid())
-  code        String  @unique // JNE_REG
-  courier     String // JNE
-  service     String // REG
-  description String?
+  id                    String  @id @default(cuid())
+  code                  String  @unique // JNE_REG
+  courier               String // JNE
+  service               String // REG
+  description           String?
+  estimatedDeliveryDays Int
 
   baseCost Int
   isActive Boolean @default(true)
@@ -244,20 +251,27 @@ model ShippingService {
   shippings Shipping[]
 }
 
+model PaymentProduct {
+  id          String  @id @default(cuid())
+  OrderId     String  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+}
+
 model Payment {
   id      String @id @default(cuid())
-  orderId String @unique
-  order   Order  @relation(fields: [orderId], references: [id])
 
   paymentServiceId String
   paymentService   PaymentService @relation(fields: [paymentServiceId], references: [id])
 
-  amount Int
-  status PaymentStatus @default(PENDING)
+  amount     Int
+  status     PaymentStatus @default(PENDING)
+  paidBefore DateTime
 
   // Gateway info
   transactionId String?
-  paymentUrl    String?
   paidAt        DateTime?
 
   createdAt DateTime @default(now())
@@ -275,6 +289,8 @@ model Shipping {
   receiverName String
   phone        String
   address      String
+
+  estimatedDelivery DateTime
 
   shippingCost   Int
   trackingNumber String?
